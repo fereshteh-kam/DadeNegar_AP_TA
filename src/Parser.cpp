@@ -36,7 +36,7 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
     string fieldsStr;
     getline(ss, fieldsStr);
     
-
+    unordered_set<string> fieldNames;
     vector<Field> fields;
 
     size_t start = 0;
@@ -56,6 +56,12 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
                 cout << "Error: Invalid field definition: " << fieldDef << "\n";
                 return;
             }
+
+            if (fieldNames.find(f.name) != fieldNames.end()) {
+                cout << "Error: Duplicate field name in table definition\n";
+                return;
+            }
+            fieldNames.insert(f.name);
 
             transform(typeStr.begin(), typeStr.end(), typeStr.begin(), ::tolower);
             if (typeStr == "int") f.type = FieldType::INT;
@@ -107,7 +113,7 @@ void Parser::parseInsert(const string& line, Database& db){
     ss >> tableName;
     auto it = db.tables.find(tableName);
     if (it == db.tables.end()) {
-        cout<<  "Error: Table " << tableName << " does not exist";
+        cout<<  "Error: Table " << tableName << " does not exist\n";
         return;
     }
     Table& table = it->second;
