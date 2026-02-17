@@ -47,3 +47,19 @@ bool Database::insertInfo(string tableName, Record record, string& msg){
     }
     return false;
 }
+
+bool Database::updateRecords(string tableName,string searchField, string op, string valueStr,
+                            string updateField, string newValueStr,string& msg)
+{
+    auto it = tables.find(tableName);
+    if(it == tables.end()){
+        msg = "Error: Table " + tableName + " does not exist";
+        return false;
+    }
+
+    Table& table = it->second;
+    table.updateRecords(searchField, op, valueStr, updateField, newValueStr);
+
+    msg = "Success: Records updated in table";
+    return true;
+}

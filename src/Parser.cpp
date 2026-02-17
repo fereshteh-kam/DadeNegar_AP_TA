@@ -21,8 +21,8 @@ void Parser::execute(const string& line, Database& db)
     // else if(line.rfind("select",0) == 0)
     //     parseSelect(line, db);
 
-    // else if(line.rfind("update",0) == 0)
-    //     parseUpdate(line, db);
+    else if(line.rfind("update",0) == 0)
+        parseUpdate(line, db);
 }
 
 void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
@@ -52,11 +52,8 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
             Field f;
             string typeStr, requiredStr;
 
-            if (!(fss >> f.name >> typeStr >> requiredStr)) {
-                cout << "Error: Invalid field definition: " << fieldDef << "\n";
-                return;
-            }
-
+            fss >> f.name >> typeStr >> requiredStr;
+                
             if (fieldNames.find(f.name) != fieldNames.end()) {
                 cout << "Error: Duplicate field name in table definition\n";
                 return;
@@ -176,4 +173,28 @@ void Parser::parseInsert(const string& line, Database& db){
     cout << msg << "\n";
 }
 
+void Parser::parseUpdate(const string& line, Database& db)
+{
+    istringstream ss(line);
+    string token;
+    ss >> token; 
 
+    string tableName;
+    ss >> tableName;
+
+    ss >> token;
+
+    string searchField, op, valueStr;
+    ss >> searchField >> op >> valueStr;
+
+    ss >> token;
+
+    string updateField, newValueStr;
+    ss >> updateField >> newValueStr;
+
+    string msg;
+    db.updateRecords(tableName, searchField, op, valueStr,
+                     updateField, newValueStr, msg);
+
+    cout << msg << "\n";
+}
