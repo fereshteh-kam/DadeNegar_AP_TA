@@ -12,8 +12,8 @@ void Parser::execute(const string& line, Database& db)
     else if(line.rfind("create_enhanced_table",0) == 0)
         parseCreateTable(line, db, true);
 
-    // else if(line.rfind("drop_table",0) == 0)
-    //     parseDropTable(line, db);
+    else if(line.rfind("drop_table",0) == 0)
+        parseDropTable(line, db);
 
     // else if(line.rfind("insert into",0) == 0)
     //     parseInsert(line, db);
@@ -83,5 +83,19 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
 
     string msg;
     db.createTable(tableName, fields, enhanced, msg);
+    cout << msg << "\n";
+}
+
+void Parser::parseDropTable(const string& line, Database& db){
+    istringstream ss(line);
+    string token;
+
+    ss >> token;
+
+    string tableName;
+    ss >> tableName;
+
+    string msg;
+    db.dropTable(tableName,msg);
     cout << msg << "\n";
 }
