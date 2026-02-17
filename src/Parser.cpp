@@ -201,7 +201,6 @@ void Parser::parseUpdate(const string& line, Database& db)
 
 void Parser::parseSelect(const string& line, Database& db)
 {
-    // find positions of keywords manually (much safer)
     size_t fromPos  = line.find(" from ");
     size_t wherePos = line.find(" where ");
 
@@ -210,12 +209,10 @@ void Parser::parseSelect(const string& line, Database& db)
         return;
     }
 
-    // extract parts
     string requestedFieldsStr = line.substr(7, fromPos - 7);
     string tableName = line.substr(fromPos + 6, wherePos - (fromPos + 6));
     string condition = line.substr(wherePos + 7);
 
-    // split requested fields
     vector<string> requestedFields;
     string temp;
     stringstream fs(requestedFieldsStr);
@@ -224,7 +221,6 @@ void Parser::parseSelect(const string& line, Database& db)
             requestedFields.push_back(temp);
     }
 
-    // parse condition: field op value
     string searchField, op, valueStr;
     stringstream cs(condition);
     cs >> searchField >> op >> valueStr;
