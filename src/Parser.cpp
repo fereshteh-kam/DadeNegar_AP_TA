@@ -18,8 +18,8 @@ void Parser::execute(const string& line, Database& db)
     else if(line.rfind("insert into",0) == 0)
         parseInsert(line, db);
 
-    // else if(line.rfind("select",0) == 0)
-    //     parseSelect(line, db);
+    else if(line.rfind("select",0) == 0)
+        parseSelect(line, db);
 
     else if(line.rfind("update",0) == 0)
         parseUpdate(line, db);
@@ -198,3 +198,42 @@ void Parser::parseUpdate(const string& line, Database& db)
 
     cout << msg << "\n";
 }
+
+void Parser::parseSelect(const string& line, Database& db)
+{
+    // find positions of keywords manually (much safer)
+    size_t fromPos  = line.find(" from ");
+    size_t wherePos = line.find(" where ");
+
+    if(fromPos == string::npos || wherePos == string::npos){
+        cout << "Error: Invalid SELECT syntax\n";
+        return;
+    }
+
+    // extract parts
+    string requestedFieldsStr = line.substr(7, fromPos - 7);
+    string tableName = line.substr(fromPos + 6, wherePos - (fromPos + 6));
+    string condition = line.substr(wherePos + 7);
+
+    // split requested fields
+    vector<string> requestedFields;
+    string temp;
+    stringstream fs(requestedFieldsStr);
+    while(getline(fs, temp, ';')){
+        if(!temp.empty())
+            requestedFields.push_back(temp);
+    }
+
+    // parse condition: field op value
+    string searchField, op, valueStr;
+    stringstream cs(condition);
+    cs >> searchField >> op >> valueStr;
+
+    string msg;
+    db.selectRecords(tableName, requestedFields,
+                     searchField, op, valueStr, msg);
+
+    if(!msg.empty())
+        cout << msg << "\n";
+}
+

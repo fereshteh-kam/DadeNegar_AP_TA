@@ -21,5 +21,6 @@ public:
 
     bool insertRecord(const Record& rec, string& error);
     void updateRecords(string searchField, string op, string valueStr, string updateField, string newValueStr);
+    bool selectRecords(vector<string> requestedFields,string searchField, string op, string valueStr,string& msg);
 
 };

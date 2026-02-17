@@ -63,3 +63,18 @@ bool Database::updateRecords(string tableName,string searchField, string op, str
     msg = "Success: Records updated in table";
     return true;
 }
+
+bool Database::selectRecords(string tableName,
+                             vector<string> requestedFields,
+                             string searchField, string op, string valueStr,
+                             string& msg)
+{
+    auto it = tables.find(tableName);
+    if(it == tables.end()){
+        msg = "Error: Table " + tableName + " does not exist";
+        return false;
+    }
+
+    Table& table = it->second;
+    return table.selectRecords(requestedFields, searchField, op, valueStr, msg);
+}
