@@ -31,3 +31,19 @@ bool Database::dropTable(string name, string& msg) {
     msg = "Success: Table " + name + " deleted successfully";
     return true;
 }
+
+bool Database::insertInfo(string tableName, Record record, string& msg){
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+        msg =  "Error: Table " + tableName + " does not exist";
+        return false;
+    }
+
+    Table& table = it->second;
+
+    if(table.insertRecord(record,msg)){
+        msg = "Success: Record inserted into table successfully";
+        return true;
+    }
+    return false;
+}

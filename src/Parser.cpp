@@ -15,8 +15,8 @@ void Parser::execute(const string& line, Database& db)
     else if(line.rfind("drop_table",0) == 0)
         parseDropTable(line, db);
 
-    // else if(line.rfind("insert into",0) == 0)
-    //     parseInsert(line, db);
+    else if(line.rfind("insert into",0) == 0)
+        parseInsert(line, db);
 
     // else if(line.rfind("select",0) == 0)
     //     parseSelect(line, db);
@@ -28,7 +28,6 @@ void Parser::execute(const string& line, Database& db)
 void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
     istringstream ss(line);
     string token;
-
     ss >> token; 
 
     string tableName;
@@ -89,7 +88,6 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
 void Parser::parseDropTable(const string& line, Database& db){
     istringstream ss(line);
     string token;
-
     ss >> token;
 
     string tableName;
@@ -99,3 +97,77 @@ void Parser::parseDropTable(const string& line, Database& db){
     db.dropTable(tableName,msg);
     cout << msg << "\n";
 }
+
+void Parser::parseInsert(const string& line, Database& db){
+    istringstream ss(line);
+    string token;
+    ss >> token >> token;
+
+    string tableName;
+    ss >> tableName;
+    auto it = db.tables.find(tableName);
+    if (it == db.tables.end()) {
+        cout<<  "Error: Table " << tableName << " does not exist";
+        return;
+    }
+    Table& table = it->second;
+
+    string fieldsLine;
+    getline(ss, fieldsLine);
+    if (fieldsLine.empty() || fieldsLine.find(':') == string::npos) {
+        getline(cin, fieldsLine);
+    }
+
+    Record record;
+    size_t start = 0;
+    while (start < fieldsLine.size()) {
+        size_t end = fieldsLine.find(';', start);
+        string pair = fieldsLine.substr(start, end - start);
+
+        pair.erase(0, pair.find_first_not_of(" \t"));
+        pair.erase(pair.find_last_not_of(" \t") + 1);
+
+        if (!pair.empty()) {
+            size_t colon = pair.find(':');
+            if (colon == string::npos) {
+                start = (end == std::string::npos ? fieldsLine.size() : end + 1);
+                continue;
+            }
+
+            std::string fieldName = pair.substr(0, colon);
+            std::string valueStr = pair.substr(colon + 1);
+
+            fieldName.erase(0, fieldName.find_first_not_of(" \t"));
+            fieldName.erase(fieldName.find_last_not_of(" \t") + 1);
+            valueStr.erase(0, valueStr.find_first_not_of(" \t"));
+            valueStr.erase(valueStr.find_last_not_of(" \t") + 1);
+            record.values[fieldName] = valueStr;
+            
+            auto fIt = std::find_if(table.fields.begin(), table.fields.end(),
+                                    [&](const Field& f){ return f.name == fieldName; });
+            if (fIt == table.fields.end()) {
+                start = (end == std::string::npos ? fieldsLine.size() : end + 1);
+                continue; // skip unknown fields
+            }
+
+            if (fIt->type == FieldType::INT) {
+                try {
+                    record.values[fieldName] = std::stoi(valueStr);
+                } catch (...) {
+                    // invalid int => treat as missing
+                }
+            } else {
+                record.values[fieldName] = valueStr;
+            }
+        }
+
+        if (end == std::string::npos) break;
+        start = end + 1;
+    }
+
+    string msg;
+    db.insertInfo(tableName,record,msg);
+    cout << msg << "\n";
+}
+
+

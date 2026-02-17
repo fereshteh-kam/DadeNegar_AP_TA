@@ -8,4 +8,5 @@ public:
 
     bool createTable(string name, vector<Field> fields, bool enhanced, string& msg);
     bool dropTable(string name, string& msg);
+    bool insertInfo(string tableName, Record record, string& msg);
 };
