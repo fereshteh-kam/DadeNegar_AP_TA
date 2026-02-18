@@ -1,8 +1,9 @@
 #include "Database.h"
+#include "Constants.h"
 
 bool Database::createTable(string name, vector<Field> fields, bool enhanced, string& msg) {
     if(tables.count(name)) {
-        msg = "Error: A table with this name already exists";
+        msg = MSG::ERR_TABLE_EXISTS;
         return false;
     }
 
@@ -17,32 +18,32 @@ bool Database::createTable(string name, vector<Field> fields, bool enhanced, str
     }
 
     tables[name] = t;
-    msg = "Success: Table " + name + " created successfully";
+    msg = MSG::TABLE_CREATED_1 + name + MSG::TABLE_CREATED_2;
     return true;
 }
 
 bool Database::dropTable(string name, string& msg) {
     if(!tables.count(name)) {
-        msg = "Error: Table " + name + " does not exist";
+        msg = MSG::ERR_TABLE_NOT_FOUND_1 + name + MSG::ERR_TABLE_NOT_FOUND_2;
         return false;
     }
 
     tables.erase(name);
-    msg = "Success: Table " + name + " deleted successfully";
+    msg = MSG::TABLE_DELETED_1 + name + MSG::TABLE_DELETED_2;
     return true;
 }
 
 bool Database::insertInfo(string tableName, Record record, string& msg){
     auto it = tables.find(tableName);
     if (it == tables.end()) {
-        msg =  "Error: Table " + tableName + " does not exist";
+        msg = MSG::ERR_TABLE_NOT_FOUND_1 + tableName + MSG::ERR_TABLE_NOT_FOUND_2;
         return false;
     }
 
     Table& table = it->second;
 
     if(table.insertRecord(record,msg)){
-        msg = "Success: Record inserted into table successfully";
+        msg = MSG::RECORD_INSERTED;
         return true;
     }
     return false;
@@ -53,14 +54,14 @@ bool Database::updateRecords(string tableName,string searchField, string op, str
 {
     auto it = tables.find(tableName);
     if(it == tables.end()){
-        msg = "Error: Table " + tableName + " does not exist";
+        msg = MSG::ERR_TABLE_NOT_FOUND_1 + tableName + MSG::ERR_TABLE_NOT_FOUND_2;
         return false;
     }
 
     Table& table = it->second;
     table.updateRecords(searchField, op, valueStr, updateField, newValueStr);
 
-    msg = "Success: Records updated in table";
+    msg = MSG::RECORD_UPDATED;
     return true;
 }
 
@@ -71,7 +72,7 @@ bool Database::selectRecords(string tableName,
 {
     auto it = tables.find(tableName);
     if(it == tables.end()){
-        msg = "Error: Table " + tableName + " does not exist";
+        msg = MSG::ERR_TABLE_NOT_FOUND_1 + tableName + MSG::ERR_TABLE_NOT_FOUND_2;
         return false;
     }
 

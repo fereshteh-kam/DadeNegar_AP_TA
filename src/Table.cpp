@@ -1,5 +1,5 @@
 #include "Table.h"
-
+#include "Constants.h"
 bool compareValues(const Value& v, const string& op, const Value& cond)
 {
     if(v.index() == 0) 
@@ -28,7 +28,7 @@ bool Table::insertRecord(const Record& rec, string& error) {
     for (const Field& f : fields) {
         if (f.required) {
             if (rec.values.find(f.name) == rec.values.end()) {
-                error = "Error: Missing value for required field";
+                error = MSG::ERR_REQUIRED_MISSING;
                 return false;
             }
         }
@@ -36,17 +36,17 @@ bool Table::insertRecord(const Record& rec, string& error) {
 
     if(isEnhanced){
         for (const Field& f : fields) {
-            if (f.required) 
+            if (f.required){
                 for (const Record& r : records) {
                     if (r.values.find(f.name) != r.values.end() &&
                         rec.values.at(f.name) == r.values.at(f.name)) {
-                        error = "Error: Duplicate value for required field";
+                        error = MSG::ERR_DUPLICATE_REQUIRED;
                         return false;
                     }
                 }
             }
         }
-
+    }
     records.push_back(rec);
     return true;
 }
@@ -107,7 +107,7 @@ bool Table::selectRecords(vector<string> requestedFields,
     }
 
     if(result.empty()){
-        msg = "Error: No matching records found";
+        msg = MSG::ERR_NO_MATCHING_RECORD;
         return false;
     }
 
@@ -143,7 +143,7 @@ bool Table::selectRecords(vector<string> requestedFields,
                 cout << " : ";
         }
 
-        cout << "\n";
+        cout << KW::NEXT_LINE;
     }
 
     msg = "";

@@ -1,27 +1,28 @@
 #include "Parser.h"
 #include "Database.h"
 #include "include.h"
+#include "Constants.h"
 
 using namespace std;
 
 void Parser::execute(const string& line, Database& db)
 {
-    if(line.rfind("create_table",0) == 0)
+    if(line.rfind(KW::CREATE_TABLE,0) == 0)
         parseCreateTable(line, db, false);
 
-    else if(line.rfind("create_enhanced_table",0) == 0)
+    else if(line.rfind(KW::CREATE_ENHANCED_TABLE,0) == 0)
         parseCreateTable(line, db, true);
 
-    else if(line.rfind("drop_table",0) == 0)
+    else if(line.rfind(KW::DROP_TABLE,0) == 0)
         parseDropTable(line, db);
 
-    else if(line.rfind("insert into",0) == 0)
+    else if(line.rfind(KW::INSERT_INTO,0) == 0)
         parseInsert(line, db);
 
-    else if(line.rfind("select",0) == 0)
+    else if(line.rfind(KW::SELECT,0) == 0)
         parseSelect(line, db);
 
-    else if(line.rfind("update",0) == 0)
+    else if(line.rfind(KW::UPDATE,0) == 0)
         parseUpdate(line, db);
 }
 
@@ -41,7 +42,7 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
 
     size_t start = 0;
     while (start < fieldsStr.size()) {
-        size_t end = fieldsStr.find(';', start);
+        size_t end = fieldsStr.find(KW::FIELD_SEPARATOR, start);
         string fieldDef = fieldsStr.substr(start, end - start);
 
         fieldDef.erase(0, fieldDef.find_first_not_of(" \t"));
@@ -55,24 +56,22 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
             fss >> f.name >> typeStr >> requiredStr;
                 
             if (fieldNames.find(f.name) != fieldNames.end()) {
-                cout << "Error: Duplicate field name in table definition\n";
+                cout << MSG::ERR_DUPLICATE_FIELD << KW::NEXT_LINE;
                 return;
             }
             fieldNames.insert(f.name);
 
             transform(typeStr.begin(), typeStr.end(), typeStr.begin(), ::tolower);
-            if (typeStr == "int") f.type = FieldType::INT;
-            else if (typeStr == "string") f.type = FieldType::STRING;
+            if (typeStr == KW::TYPE_INT) f.type = FieldType::INT;
+            else if (typeStr == KW::TYPE_STRING) f.type = FieldType::STRING;
             else {
-                cout << "Error: Unknown field type for field " << f.name << "\n";
                 return;
             }
 
             transform(requiredStr.begin(), requiredStr.end(), requiredStr.begin(), ::tolower);
-            if (requiredStr == "required") f.required = true;
-            else if (requiredStr == "optional") f.required = false;
+            if (requiredStr == KW::REQUIRED) f.required = true;
+            else if (requiredStr == KW::OPTIONAL) f.required = false;
             else {
-                cout << "Error: required/optional must be specified for field " << f.name << "\n";
                 return;
             }
 
@@ -85,7 +84,7 @@ void Parser::parseCreateTable(const string& line, Database& db, bool enhanced) {
 
     string msg;
     db.createTable(tableName, fields, enhanced, msg);
-    cout << msg << "\n";
+    cout << msg << KW::NEXT_LINE;
 }
 
 void Parser::parseDropTable(const string& line, Database& db){
@@ -98,7 +97,7 @@ void Parser::parseDropTable(const string& line, Database& db){
 
     string msg;
     db.dropTable(tableName,msg);
-    cout << msg << "\n";
+    cout << msg << KW::NEXT_LINE;
 }
 
 void Parser::parseInsert(const string& line, Database& db){
@@ -110,28 +109,28 @@ void Parser::parseInsert(const string& line, Database& db){
     ss >> tableName;
     auto it = db.tables.find(tableName);
     if (it == db.tables.end()) {
-        cout<<  "Error: Table " << tableName << " does not exist\n";
+        cout<< MSG::ERR_TABLE_NOT_FOUND_1 + tableName + MSG::ERR_TABLE_NOT_FOUND_2 << KW::NEXT_LINE;
         return;
     }
     Table& table = it->second;
 
     string fieldsLine;
     getline(ss, fieldsLine);
-    if (fieldsLine.empty() || fieldsLine.find(':') == string::npos) {
+    if (fieldsLine.empty() || fieldsLine.find(KW::KEY_VALUE_SEPARATOR) == string::npos) {
         getline(cin, fieldsLine);
     }
 
     Record record;
     size_t start = 0;
     while (start < fieldsLine.size()) {
-        size_t end = fieldsLine.find(';', start);
+        size_t end = fieldsLine.find(KW::FIELD_SEPARATOR, start);
         string pair = fieldsLine.substr(start, end - start);
 
         pair.erase(0, pair.find_first_not_of(" \t"));
         pair.erase(pair.find_last_not_of(" \t") + 1);
 
         if (!pair.empty()) {
-            size_t colon = pair.find(':');
+            size_t colon = pair.find(KW::KEY_VALUE_SEPARATOR);
             if (colon == string::npos) {
                 start = (end == std::string::npos ? fieldsLine.size() : end + 1);
                 continue;
@@ -170,7 +169,7 @@ void Parser::parseInsert(const string& line, Database& db){
 
     string msg;
     db.insertInfo(tableName,record,msg);
-    cout << msg << "\n";
+    cout << msg << KW::NEXT_LINE;
 }
 
 void Parser::parseUpdate(const string& line, Database& db)
@@ -196,18 +195,13 @@ void Parser::parseUpdate(const string& line, Database& db)
     db.updateRecords(tableName, searchField, op, valueStr,
                      updateField, newValueStr, msg);
 
-    cout << msg << "\n";
+    cout << msg << KW::NEXT_LINE;
 }
 
 void Parser::parseSelect(const string& line, Database& db)
 {
     size_t fromPos  = line.find(" from ");
     size_t wherePos = line.find(" where ");
-
-    if(fromPos == string::npos || wherePos == string::npos){
-        cout << "Error: Invalid SELECT syntax\n";
-        return;
-    }
 
     string requestedFieldsStr = line.substr(7, fromPos - 7);
     string tableName = line.substr(fromPos + 6, wherePos - (fromPos + 6));
@@ -216,7 +210,7 @@ void Parser::parseSelect(const string& line, Database& db)
     vector<string> requestedFields;
     string temp;
     stringstream fs(requestedFieldsStr);
-    while(getline(fs, temp, ';')){
+    while(getline(fs, temp, KW::FIELD_SEPARATOR)){
         if(!temp.empty())
             requestedFields.push_back(temp);
     }
@@ -230,6 +224,6 @@ void Parser::parseSelect(const string& line, Database& db)
                      searchField, op, valueStr, msg);
 
     if(!msg.empty())
-        cout << msg << "\n";
+        cout << msg << KW::NEXT_LINE;
 }
 
